@@ -1,0 +1,29 @@
+{
+    "jobs": {
+        "79773616-0ded-4ed9-b992-288b14142fc6": {
+            "tables": {
+                "seed_table_001": {
+                    "job_id": "79773616-0ded-4ed9-b992-288b14142fc6",
+                    "table_name": "seed_table_001",
+                    "batch_number": 200,
+                    "offset": 1000000,
+                    "timestamp": "2026-06-09T14:36:03.498607+00:00"
+                },
+                "seed_table_002": {
+                    "job_id": "79773616-0ded-4ed9-b992-288b14142fc6",
+                    "table_name": "seed_table_002",
+                    "batch_number": 200,
+                    "offset": 1000000,
+                    "timestamp": "2026-06-09T14:39:02.283579+00:00"
+                },
+                "seed_table_003": {
+                    "job_id": "79773616-0ded-4ed9-b992-288b14142fc6",
+                    "table_name": "seed_table_003",
+                    "batch_number": 13,
+                    "offset": 65000,
+                    "timestamp": "2026-06-09T14:39:08.217818+00:00"
+                }
+            }
+        }
+    }
+}

@@ -10,6 +10,6 @@ MYSQL_CONFIG = {
     "host": "localhost",
     "port": 3306,
     "database": "migration_demo",
-    "username": "root",
-    "password": "1234"
+    "username": "migration",
+    "password": "Shivam@123"
 }

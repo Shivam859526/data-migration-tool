@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
+from urllib.parse import quote_plus
 
 from config.constants import (
     CONNECTION_MAX_OVERFLOW,
@@ -54,12 +55,13 @@ class ConnectionManager:
     @staticmethod
     def get_mysql_engine(config: Dict[str, Any]) -> Engine:
         """Build a MySQL engine from a config dict."""
+        password = quote_plus(config["password"])
         url = (
-            f"mysql+pymysql://"
-            f"{config['username']}:{config['password']}@"
-            f"{config['host']}:{config['port']}/{config['database']}"
-            f"?charset=utf8mb4"
-        )
+        f"mysql+pymysql://"
+        f"{config['username']}:{password}@"
+        f"{config['host']}:{config['port']}/{config['database']}"
+        f"?charset=utf8mb4"
+    )
         key = f"mysql:{config['host']}:{config['port']}:{config['database']}"
         return ConnectionManager._build_engine(url, key)
 
