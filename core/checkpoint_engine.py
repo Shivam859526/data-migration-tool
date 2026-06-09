@@ -3,7 +3,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from config.constants import CHECKPOINT_FILE
 from utils.logger import Logger
@@ -42,18 +42,22 @@ class CheckpointEngine:
         table_name: str,
         offset: int,
         batch_number: int = 0,
+        last_key: Optional[List[Any]] = None,
     ) -> None:
         """Save checkpoint for a specific job and table."""
         data = cls._load_all()
         jobs = data.setdefault("jobs", {})
         job = jobs.setdefault(job_id, {"tables": {}})
-        job["tables"][table_name] = {
+        entry: Dict[str, Any] = {
             "job_id": job_id,
             "table_name": table_name,
             "batch_number": batch_number,
             "offset": offset,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+        if last_key is not None:
+            entry["last_key"] = list(last_key)
+        job["tables"][table_name] = entry
         cls._save_all(data)
         logger.info(
             "Checkpoint saved: job=%s table=%s offset=%d batch=%d",
@@ -85,6 +89,16 @@ class CheckpointEngine:
         if checkpoint:
             return int(checkpoint.get("offset", 0))
         return 0
+
+    @classmethod
+    def get_table_last_key(
+        cls, job_id: str, table_name: str
+    ) -> Optional[Tuple[Any, ...]]:
+        """Return saved keyset cursor for resumable keyset pagination."""
+        checkpoint = cls.load_checkpoint(job_id, table_name)
+        if checkpoint and "last_key" in checkpoint:
+            return tuple(checkpoint["last_key"])
+        return None
 
     @classmethod
     def clear_checkpoint(cls, job_id: str, table_name: Optional[str] = None) -> None:

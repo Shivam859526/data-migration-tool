@@ -52,6 +52,19 @@ class TestCreateTableEngine(unittest.TestCase):
             "`my``table`",
         )
 
+    def test_foreign_keys_deferred_by_default(self):
+        metadata = dict(SAMPLE_METADATA)
+        metadata["foreign_keys"] = [{
+            "name": "fk_user",
+            "constrained_columns": ["id"],
+            "referred_table": "roles",
+            "referred_columns": ["id"],
+        }]
+        sql = CreateTableEngine.generate_create_table_sql(metadata)
+        self.assertNotIn("FOREIGN KEY", sql)
+        alter = CreateTableEngine.generate_foreign_key_sql(metadata)
+        self.assertTrue(any("ALTER TABLE" in s for s in alter))
+
 
 if __name__ == "__main__":
     unittest.main()

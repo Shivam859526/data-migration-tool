@@ -1,6 +1,6 @@
 """Application-wide constants."""
 
-BATCH_SIZE = 5000
+BATCH_SIZE = 50_000
 
 DEFAULT_SCHEMA = "public"
 

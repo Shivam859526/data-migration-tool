@@ -24,6 +24,60 @@
                     "timestamp": "2026-06-09T14:39:08.217818+00:00"
                 }
             }
+        },
+        "34aa1d99-0077-4380-95e9-80f1d29be37d": {
+            "tables": {
+                "categories": {
+                    "job_id": "34aa1d99-0077-4380-95e9-80f1d29be37d",
+                    "table_name": "categories",
+                    "batch_number": 1,
+                    "offset": 3,
+                    "timestamp": "2026-06-09T15:15:25.782583+00:00",
+                    "last_key": [
+                        3
+                    ]
+                },
+                "customers": {
+                    "job_id": "34aa1d99-0077-4380-95e9-80f1d29be37d",
+                    "table_name": "customers",
+                    "batch_number": 1,
+                    "offset": 3,
+                    "timestamp": "2026-06-09T15:15:25.883399+00:00",
+                    "last_key": [
+                        3
+                    ]
+                },
+                "products": {
+                    "job_id": "34aa1d99-0077-4380-95e9-80f1d29be37d",
+                    "table_name": "products",
+                    "batch_number": 1,
+                    "offset": 4,
+                    "timestamp": "2026-06-09T15:15:25.915905+00:00",
+                    "last_key": [
+                        4
+                    ]
+                },
+                "orders": {
+                    "job_id": "34aa1d99-0077-4380-95e9-80f1d29be37d",
+                    "table_name": "orders",
+                    "batch_number": 1,
+                    "offset": 3,
+                    "timestamp": "2026-06-09T15:15:25.939350+00:00",
+                    "last_key": [
+                        3
+                    ]
+                },
+                "order_items": {
+                    "job_id": "34aa1d99-0077-4380-95e9-80f1d29be37d",
+                    "table_name": "order_items",
+                    "batch_number": 1,
+                    "offset": 6,
+                    "timestamp": "2026-06-09T15:15:25.974831+00:00",
+                    "last_key": [
+                        6
+                    ]
+                }
+            }
         }
     }
 }

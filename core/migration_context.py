@@ -35,6 +35,7 @@ class MigrationContext:
         self.is_paused: bool = False
         self.is_stopped: bool = False
         self.errors: List[Dict[str, Any]] = []
+        self.auto_added_tables: List[str] = []
 
     def pause(self) -> None:
         self.is_paused = True

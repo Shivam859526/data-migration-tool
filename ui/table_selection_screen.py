@@ -62,8 +62,8 @@ class TableSelectionScreen(QWidget):
         options_layout.addWidget(QLabel("Batch Size:"))
         self.batch_size_spin = QSpinBox()
         self.batch_size_spin.setRange(100, 100000)
-        self.batch_size_spin.setValue(5000)
-        self.batch_size_spin.setSingleStep(500)
+        self.batch_size_spin.setValue(50000)
+        self.batch_size_spin.setSingleStep(5000)
         options_layout.addWidget(self.batch_size_spin)
 
         self.skip_existing_cb = QCheckBox("Skip existing tables")

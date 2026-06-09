@@ -1,10 +1,11 @@
 """High-performance bulk insert engine with transaction support."""
 
 import time
-from typing import Any, Dict, List, Optional
+from contextlib import contextmanager
+from typing import Any, Dict, Generator, List, Optional
 
 from sqlalchemy import text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from config.constants import CONNECTION_RETRY_ATTEMPTS, CONNECTION_RETRY_DELAY
@@ -21,12 +22,35 @@ class BulkInsertEngine:
         return f"`{name.replace('`', '``')}`"
 
     @classmethod
+    @contextmanager
+    def foreign_key_session(
+        cls, engine: Engine, enabled: bool = False
+    ) -> Generator[Connection, None, None]:
+        """
+        Control MySQL FOREIGN_KEY_CHECKS for the duration of data loading.
+
+        Disabled during bulk load to safely handle self-references and cycles;
+        re-enabled afterward so integrity is enforced going forward.
+        """
+        with engine.connect() as conn:
+            conn.execute(
+                text(f"SET FOREIGN_KEY_CHECKS={1 if enabled else 0}")
+            )
+            conn.commit()
+            try:
+                yield conn
+            finally:
+                conn.execute(text("SET FOREIGN_KEY_CHECKS=1"))
+                conn.commit()
+
+    @classmethod
     def insert_batch(
         cls,
         engine: Engine,
         table_name: str,
         rows: List[Dict[str, Any]],
         retries: int = CONNECTION_RETRY_ATTEMPTS,
+        connection: Optional[Connection] = None,
     ) -> int:
         """Insert a batch of rows. Returns number of rows inserted."""
         if not rows:
@@ -44,14 +68,18 @@ class BulkInsertEngine:
 
         for attempt in range(1, retries + 1):
             try:
-                with engine.begin() as conn:
-                    conn.execute(text(sql), rows)
-                logger.debug(
-                    "Inserted %d rows into %s", len(rows), table_name
-                )
+                if connection is not None:
+                    connection.execute(text(sql), rows)
+                    connection.commit()
+                else:
+                    with engine.begin() as conn:
+                        conn.execute(text(sql), rows)
+                logger.debug("Inserted %d rows into %s", len(rows), table_name)
                 return len(rows)
             except SQLAlchemyError as exc:
                 last_error = exc
+                if connection is not None:
+                    connection.rollback()
                 logger.warning(
                     "Batch insert failed (attempt %d/%d) for %s: %s",
                     attempt,
