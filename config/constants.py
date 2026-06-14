@@ -4,13 +4,8 @@ BATCH_SIZE = 50_000
 
 DEFAULT_SCHEMA = "public"
 
-LOG_FILE = "logs/migration.log"
-LOG_MAX_BYTES = 10 * 1024 * 1024
-LOG_BACKUP_COUNT = 5
-
 CHECKPOINT_FILE = "checkpoints.json"
 
-REPORT_FOLDER = "reports"
 EXPORT_FOLDER = "exports"
 
 SOURCE_DB = "POSTGRES"

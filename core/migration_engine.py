@@ -1,4 +1,4 @@
-"""Orchestrates schema migration, data transfer, validation, and reporting."""
+"""Orchestrates schema migration, data transfer, and validation."""
 
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -20,19 +20,15 @@ from core.dependency_resolver import DependencyResolver
 from core.job_manager import JobManager
 from core.migration_context import MigrationContext
 from core.progress_tracker import ProgressTracker
-from core.report_engine import ReportEngine
 from core.schema_engine import SchemaEngine
 from core.transformation_engine import TransformationEngine
 from core.validation_engine import ValidationEngine
-from utils.logger import Logger
-
-logger = Logger.get_logger("migration")
 
 ProgressCallback = Callable[[Dict[str, Any]], None]
 
 
 class MigrationEngine:
-    """Full migration pipeline: schema → data → validation → report."""
+    """Full migration pipeline: schema → data → validation."""
 
     def __init__(
         self,
@@ -48,8 +44,9 @@ class MigrationEngine:
         self.progress = progress_tracker or ProgressTracker()
         self.progress_callback = progress_callback
         self.transformer = TransformationEngine()
-        self.report = ReportEngine()
         self._fk_connection = None
+        self._validation_results: List[Dict[str, Any]] = []
+        self._table_results: Dict[str, int] = {}
 
     def _notify(self) -> None:
         if self.progress_callback:
@@ -65,6 +62,15 @@ class MigrationEngine:
             time.sleep(0.5)
         return not self.context.is_stopped
 
+    def _build_result(self, status: str, job_id: str) -> Dict[str, Any]:
+        return {
+            "status": status,
+            "job_id": job_id,
+            "tables_migrated": self._table_results,
+            "validation_results": self._validation_results,
+            "errors": list(self.context.errors) if self.context else [],
+        }
+
     def resolve_table_order(
         self, tables: Optional[List[str]] = None
     ) -> List[str]:
@@ -75,12 +81,8 @@ class MigrationEngine:
         ordered, auto_added = DependencyResolver.expand_with_dependencies(
             self.source_engine, selected
         )
-        if auto_added:
-            msg = f"Auto-included parent tables: {', '.join(auto_added)}"
-            self.progress.add_message(msg)
-            logger.info(msg)
-            if self.context:
-                self.context.auto_added_tables = auto_added
+        if auto_added and self.context:
+            self.context.auto_added_tables = auto_added
 
         if self.context:
             self.context.tables = ordered
@@ -103,13 +105,9 @@ class MigrationEngine:
                 metadata_list,
                 skip_existing=skip_existing,
             )
-            for table in table_list:
-                self.progress.add_message(f"Schema ready: {table}")
-                logger.info("Schema migrated for table %s", table)
             self._notify()
             return created
         except Exception as exc:
-            logger.error("Schema migration failed: %s", exc)
             if self.context:
                 self.context.errors.append({"phase": "schema", "error": str(exc)})
             raise
@@ -215,20 +213,12 @@ class MigrationEngine:
         batch_number = int(checkpoint.get("batch_number", 0)) if checkpoint else 0
 
         self.progress.set_current_table(table_name, source_row_count)
-        self.progress.add_message(
-            f"Migrating {table_name} ({source_row_count:,} rows, "
-            f"order: {', '.join(order_columns)})"
-        )
 
         column_names = [
             c["name"] for c in SchemaEngine.get_columns(self.source_engine, table_name)
         ]
 
         use_legacy_offset = resume and total_migrated > 0 and last_key is None
-        if use_legacy_offset:
-            self.progress.add_message(
-                f"Resuming {table_name} via legacy offset checkpoint ({total_migrated:,} rows)"
-            )
 
         while True:
             if not self._wait_if_paused():
@@ -276,14 +266,6 @@ class MigrationEngine:
         self._verify_table_row_count(table_name, source_row_count)
 
         self.progress.complete_table()
-        self.progress.add_message(
-            f"Completed {table_name}: {total_migrated:,} rows (verified)"
-        )
-        logger.info(
-            "Data migration complete for %s: %d rows verified",
-            table_name,
-            total_migrated,
-        )
         return total_migrated
 
     def migrate_data(
@@ -300,14 +282,6 @@ class MigrationEngine:
         self.progress.set_total_tables(len(table_list))
         results: Dict[str, int] = {}
 
-        has_cycles = DependencyResolver.has_circular_dependencies(
-            self.source_engine, table_list
-        )
-        if has_cycles:
-            self.progress.add_message(
-                "Circular FK detected — using deferred FK checks during data load"
-            )
-
         with BulkInsertEngine.foreign_key_session(
             self.target_engine, enabled=False
         ) as fk_conn:
@@ -319,14 +293,10 @@ class MigrationEngine:
                     try:
                         count = self.migrate_table_data(table, jid, size)
                         results[table] = count
+                        self._table_results[table] = count
                         JobManager.mark_table_complete(jid, table)
-                        self.report.record_table(table, count)
                     except Exception as exc:
-                        logger.error("Data migration failed for %s: %s", table, exc)
                         JobManager.mark_table_failed(jid, table, str(exc))
-                        self.report.record_table(
-                            table, 0, status="FAILED", error=str(exc)
-                        )
                         if self.context:
                             self.context.errors.append({
                                 "table": table,
@@ -360,21 +330,10 @@ class MigrationEngine:
                 columns,
             )
             results.append(result)
-            self.report.record_validation(result)
-            self.progress.add_message(
-                f"Validation {result['status']}: {table}"
-            )
 
+        self._validation_results = results
         self._notify()
         return results
-
-    def generate_report(self, status: str = MIGRATION_STATUS_COMPLETED) -> Dict[str, Any]:
-        """Finalize and export reports."""
-        report_data = self.report.finish(status)
-        paths = self.report.export_all()
-        report_data["report_paths"] = paths
-        logger.info("Report generated: %s", paths)
-        return report_data
 
     def run_full_migration(
         self,
@@ -387,39 +346,35 @@ class MigrationEngine:
         table_list = self.resolve_table_order(tables)
         job_id = self.context.job_id if self.context else "default"
 
-        self.report.start(job_id)
         JobManager.update_status(job_id, MIGRATION_STATUS_RUNNING)
 
         try:
             if migrate_schema:
-                self.progress.add_message("Starting schema migration (FK-aware)...")
                 self.migrate_schema(
                     table_list,
                     skip_existing=self.context.skip_existing_tables if self.context else True,
                 )
 
             if self.context and self.context.is_stopped:
-                return self.generate_report(MIGRATION_STATUS_STOPPED)
+                return self._build_result(MIGRATION_STATUS_STOPPED, job_id)
 
             if migrate_data:
-                self.progress.add_message("Starting data migration (dependency order)...")
                 self.migrate_data(table_list, job_id)
 
             if self.context and self.context.is_stopped:
-                return self.generate_report(MIGRATION_STATUS_STOPPED)
+                return self._build_result(MIGRATION_STATUS_STOPPED, job_id)
 
             if validate and (not self.context or self.context.validate_after_migration):
-                self.progress.add_message("Starting validation...")
                 self.validate(table_list)
 
             status = MIGRATION_STATUS_COMPLETED
             if self.context and self.context.errors:
                 status = MIGRATION_STATUS_FAILED
 
-            return self.generate_report(status)
+            return self._build_result(status, job_id)
 
         except Exception as exc:
-            logger.error("Migration failed: %s", exc)
             JobManager.update_status(job_id, MIGRATION_STATUS_FAILED)
-            self.report.record_table("_global_", 0, status="FAILED", error=str(exc))
-            return self.generate_report(MIGRATION_STATUS_FAILED)
+            if self.context:
+                self.context.errors.append({"phase": "global", "error": str(exc)})
+            return self._build_result(MIGRATION_STATUS_FAILED, job_id)

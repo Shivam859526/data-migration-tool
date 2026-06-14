@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QProgressBar,
     QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -18,7 +17,7 @@ from sqlalchemy.engine import Engine
 
 
 class MigrationScreen(QWidget):
-    """Controls migration execution and displays live progress."""
+    """Controls migration execution and displays progress."""
 
     migration_done = pyqtSignal(dict)
 
@@ -43,11 +42,13 @@ class MigrationScreen(QWidget):
         self.current_table_label = QLabel("Current table: —")
         self.rows_label = QLabel("Rows: 0 / 0")
         self.elapsed_label = QLabel("Elapsed: 0s")
+        self.status_label = QLabel("Status: Ready")
         info_layout.addWidget(self.current_table_label)
         info_layout.addWidget(self.rows_label)
         info_layout.addStretch()
         info_layout.addWidget(self.elapsed_label)
         layout.addLayout(info_layout)
+        layout.addWidget(self.status_label)
 
         layout.addWidget(QLabel("Overall Progress"))
         self.overall_progress = QProgressBar()
@@ -72,10 +73,7 @@ class MigrationScreen(QWidget):
             btn_layout.addWidget(btn)
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
-
-        self.log_output = QTextEdit()
-        self.log_output.setReadOnly(True)
-        layout.addWidget(self.log_output)
+        layout.addStretch()
 
         self._set_running_state(False)
 
@@ -90,8 +88,7 @@ class MigrationScreen(QWidget):
         self.target_engine = target_engine
         self.tables = tables
         self.options = options
-        self.log_output.clear()
-        self._append_log(f"Ready to migrate {len(tables)} table(s)")
+        self.status_label.setText(f"Status: Ready — {len(tables)} table(s) selected")
 
     def _set_running_state(self, running: bool) -> None:
         self.start_btn.setEnabled(not running)
@@ -107,47 +104,44 @@ class MigrationScreen(QWidget):
             source_engine=self.source_engine,
             target_engine=self.target_engine,
             tables=self.tables,
-            batch_size=self.options.get("batch_size", 5000),
+            batch_size=self.options.get("batch_size", 50000),
             skip_existing=self.options.get("skip_existing", True),
             validate=self.options.get("validate", True),
         )
         self.worker.progress_updated.connect(self._on_progress)
-        self.worker.log_message.connect(self._append_log)
         self.worker.migration_finished.connect(self._on_finished)
         self.worker.migration_error.connect(self._on_error)
 
         self._elapsed_seconds = 0
         self._timer.start(1000)
         self._set_running_state(True)
-        self._append_log("Migration started")
+        self.status_label.setText("Status: Running")
         self.worker.start()
 
     def _pause(self) -> None:
         if self.worker:
             self.worker.pause()
+            self.status_label.setText("Status: Paused")
 
     def _resume(self) -> None:
         if self.worker:
             self.worker.resume()
+            self.status_label.setText("Status: Running")
 
     def _stop(self) -> None:
         if self.worker:
             self.worker.stop()
-            self._append_log("Stop requested — finishing current batch...")
+            self.status_label.setText("Status: Stopping...")
 
     def _on_progress(self, snapshot: Dict[str, Any]) -> None:
         self.current_table_label.setText(
             f"Current table: {snapshot.get('current_table', '—')}"
         )
         self.rows_label.setText(
-            f"Rows: {snapshot.get('rows_processed', 0)} / {snapshot.get('total_rows', 0)}"
+            f"Rows: {snapshot.get('rows_processed', 0):,} / {snapshot.get('total_rows', 0):,}"
         )
         self.overall_progress.setValue(int(snapshot.get("overall_progress", 0)))
         self.table_progress.setValue(int(snapshot.get("table_progress", 0)))
-
-        for msg in snapshot.get("messages", [])[-3:]:
-            if msg not in self.log_output.toPlainText():
-                self._append_log(msg)
 
     def _tick_elapsed(self) -> None:
         self._elapsed_seconds += 1
@@ -156,13 +150,10 @@ class MigrationScreen(QWidget):
     def _on_finished(self, result: Dict[str, Any]) -> None:
         self._timer.stop()
         self._set_running_state(False)
-        self._append_log(f"Migration finished — status: {result.get('status', 'unknown')}")
+        self.status_label.setText(f"Status: {result.get('status', 'unknown')}")
         self.migration_done.emit(result)
 
     def _on_error(self, error: str) -> None:
         self._timer.stop()
         self._set_running_state(False)
-        self._append_log(f"ERROR: {error}")
-
-    def _append_log(self, message: str) -> None:
-        self.log_output.append(message)
+        self.status_label.setText(f"Status: Failed — {error}")

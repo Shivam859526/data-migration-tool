@@ -1,7 +1,7 @@
 POSTGRES_CONFIG = {
     "host": "localhost",
     "port": 5432,
-    "database": "migration_demo",
+    "database": "Testing_Project",
     "username": "postgres",
     "password": "1234"
 }

@@ -16,7 +16,6 @@ class ProgressTracker:
         self.tables_completed = 0
         self.total_tables = 0
         self.start_time = time.time()
-        self._messages: list[str] = []
 
     def set_total_tables(self, count: int) -> None:
         with self._lock:
@@ -38,10 +37,6 @@ class ProgressTracker:
     def complete_table(self) -> None:
         with self._lock:
             self.tables_completed += 1
-
-    def add_message(self, message: str) -> None:
-        with self._lock:
-            self._messages.append(message)
 
     def get_snapshot(self) -> Dict[str, Any]:
         with self._lock:
@@ -66,9 +61,4 @@ class ProgressTracker:
                 "total_tables": self.total_tables,
                 "overall_progress": overall,
                 "elapsed_seconds": round(elapsed, 1),
-                "messages": list(self._messages[-50:]),
             }
-
-    def reset_messages(self) -> None:
-        with self._lock:
-            self._messages.clear()

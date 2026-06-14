@@ -78,6 +78,163 @@
                     ]
                 }
             }
+        },
+        "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b": {
+            "tables": {
+                "Artist": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Artist",
+                    "batch_number": 1,
+                    "offset": 275,
+                    "timestamp": "2026-06-09T19:04:19.411791+00:00",
+                    "last_key": [
+                        275
+                    ]
+                },
+                "Employee": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Employee",
+                    "batch_number": 1,
+                    "offset": 8,
+                    "timestamp": "2026-06-09T19:04:19.635428+00:00",
+                    "last_key": [
+                        8
+                    ]
+                },
+                "Genre": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Genre",
+                    "batch_number": 1,
+                    "offset": 25,
+                    "timestamp": "2026-06-09T19:04:19.716260+00:00",
+                    "last_key": [
+                        25
+                    ]
+                },
+                "MediaType": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "MediaType",
+                    "batch_number": 1,
+                    "offset": 5,
+                    "timestamp": "2026-06-09T19:04:19.819139+00:00",
+                    "last_key": [
+                        5
+                    ]
+                },
+                "Playlist": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Playlist",
+                    "batch_number": 1,
+                    "offset": 18,
+                    "timestamp": "2026-06-09T19:04:19.912685+00:00",
+                    "last_key": [
+                        18
+                    ]
+                },
+                "Album": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Album",
+                    "batch_number": 1,
+                    "offset": 347,
+                    "timestamp": "2026-06-09T19:04:20.047936+00:00",
+                    "last_key": [
+                        347
+                    ]
+                },
+                "Customer": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Customer",
+                    "batch_number": 1,
+                    "offset": 59,
+                    "timestamp": "2026-06-09T19:04:20.166470+00:00",
+                    "last_key": [
+                        59
+                    ]
+                },
+                "Track": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Track",
+                    "batch_number": 1,
+                    "offset": 3503,
+                    "timestamp": "2026-06-09T19:04:20.776615+00:00",
+                    "last_key": [
+                        3503
+                    ]
+                },
+                "Invoice": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "Invoice",
+                    "batch_number": 1,
+                    "offset": 412,
+                    "timestamp": "2026-06-09T19:04:20.942320+00:00",
+                    "last_key": [
+                        412
+                    ]
+                },
+                "PlaylistTrack": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "PlaylistTrack",
+                    "batch_number": 1,
+                    "offset": 8715,
+                    "timestamp": "2026-06-09T19:04:21.545303+00:00",
+                    "last_key": [
+                        18,
+                        597
+                    ]
+                },
+                "InvoiceLine": {
+                    "job_id": "6ea3fba8-5e88-40fa-a74c-ef951bd4c31b",
+                    "table_name": "InvoiceLine",
+                    "batch_number": 1,
+                    "offset": 2240,
+                    "timestamp": "2026-06-09T19:04:21.875073+00:00",
+                    "last_key": [
+                        2240
+                    ]
+                }
+            }
+        },
+        "685e43b1-a7f0-4d67-98da-dc4317b0c7a2": {
+            "tables": {
+                "seed_table_001": {
+                    "job_id": "685e43b1-a7f0-4d67-98da-dc4317b0c7a2",
+                    "table_name": "seed_table_001",
+                    "batch_number": 20,
+                    "offset": 1000000,
+                    "timestamp": "2026-06-14T14:42:12.682323+00:00",
+                    "last_key": [
+                        1000000
+                    ]
+                }
+            }
+        },
+        "12045c8e-c5b9-4380-9886-b4d03c6a72ca": {
+            "tables": {
+                "seed_table_001": {
+                    "job_id": "12045c8e-c5b9-4380-9886-b4d03c6a72ca",
+                    "table_name": "seed_table_001",
+                    "batch_number": 3,
+                    "offset": 150000,
+                    "timestamp": "2026-06-14T14:45:28.042637+00:00",
+                    "last_key": [
+                        150000
+                    ]
+                }
+            }
+        },
+        "7c240a71-3976-4aea-9850-20d954fa0ce2": {
+            "tables": {
+                "seed_table_002": {
+                    "job_id": "7c240a71-3976-4aea-9850-20d954fa0ce2",
+                    "table_name": "seed_table_002",
+                    "batch_number": 7,
+                    "offset": 350000,
+                    "timestamp": "2026-06-14T15:03:16.136739+00:00",
+                    "last_key": [
+                        350000
+                    ]
+                }
+            }
         }
     }
 }

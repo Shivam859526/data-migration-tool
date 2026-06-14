@@ -6,9 +6,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from config.constants import CHECKPOINT_FILE
-from utils.logger import Logger
-
-logger = Logger.get_logger("checkpoint")
 
 
 class CheckpointEngine:
@@ -59,13 +56,6 @@ class CheckpointEngine:
             entry["last_key"] = list(last_key)
         job["tables"][table_name] = entry
         cls._save_all(data)
-        logger.info(
-            "Checkpoint saved: job=%s table=%s offset=%d batch=%d",
-            job_id,
-            table_name,
-            offset,
-            batch_number,
-        )
 
     @classmethod
     def load_checkpoint(
@@ -114,7 +104,6 @@ class CheckpointEngine:
             data["jobs"].pop(job_id, None)
 
         cls._save_all(data)
-        logger.info("Checkpoint cleared: job=%s table=%s", job_id, table_name)
 
     @classmethod
     def list_checkpoints(cls, job_id: str) -> List[Dict[str, Any]]:

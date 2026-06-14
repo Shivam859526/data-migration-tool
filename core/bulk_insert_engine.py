@@ -9,9 +9,6 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from config.constants import CONNECTION_RETRY_ATTEMPTS, CONNECTION_RETRY_DELAY
-from utils.logger import Logger
-
-logger = Logger.get_logger("bulk_insert")
 
 
 class BulkInsertEngine:
@@ -74,19 +71,11 @@ class BulkInsertEngine:
                 else:
                     with engine.begin() as conn:
                         conn.execute(text(sql), rows)
-                logger.debug("Inserted %d rows into %s", len(rows), table_name)
                 return len(rows)
             except SQLAlchemyError as exc:
                 last_error = exc
                 if connection is not None:
                     connection.rollback()
-                logger.warning(
-                    "Batch insert failed (attempt %d/%d) for %s: %s",
-                    attempt,
-                    retries,
-                    table_name,
-                    exc,
-                )
                 if attempt < retries:
                     time.sleep(CONNECTION_RETRY_DELAY)
 

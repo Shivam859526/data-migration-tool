@@ -8,9 +8,6 @@ from typing import Dict, List, Set, Tuple
 from sqlalchemy.engine import Engine
 
 from core.schema_engine import SchemaEngine
-from utils.logger import Logger
-
-logger = Logger.get_logger("dependency")
 
 
 class DependencyResolver:
@@ -58,11 +55,6 @@ class DependencyResolver:
             table = queue.popleft()
             for dep in cls.get_dependencies(engine, table):
                 if dep not in all_tables:
-                    logger.warning(
-                        "Table %s references %s which is not in source DB",
-                        table,
-                        dep,
-                    )
                     continue
                 if dep not in expanded:
                     expanded.add(dep)
@@ -98,14 +90,8 @@ class DependencyResolver:
 
         if len(sorted_tables) < len(tables):
             remaining = [t for t in tables if t not in sorted_tables]
-            logger.warning(
-                "Circular FK dependencies detected among: %s — "
-                "will use deferred FK enforcement during data load",
-                ", ".join(remaining),
-            )
             sorted_tables.extend(sorted(remaining))
 
-        logger.info("Migration order: %s", " -> ".join(sorted_tables))
         return sorted_tables
 
     @classmethod
@@ -131,7 +117,7 @@ class DependencyResolver:
     def validate_selection(
         cls, engine: Engine, selected: List[str]
     ) -> Dict[str, object]:
-        """Summarize dependency info for the UI / logs."""
+        """Summarize dependency info for the UI."""
         expanded, auto_added = cls.expand_with_dependencies(engine, selected)
         has_cycles = cls.has_circular_dependencies(engine, expanded)
         return {

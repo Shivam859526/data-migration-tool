@@ -7,9 +7,6 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
 from config.constants import VALIDATION_FAIL, VALIDATION_PASS
-from utils.logger import Logger
-
-logger = Logger.get_logger("validation")
 
 
 class ValidationEngine:
@@ -92,8 +89,7 @@ class ValidationEngine:
             with engine.connect() as conn:
                 result = conn.execute(query).scalar()
                 return str(result) if result else None
-        except Exception as exc:
-            logger.warning("Checksum failed for %s: %s", table_name, exc)
+        except Exception:
             return None
 
     @classmethod
@@ -158,13 +154,6 @@ class ValidationEngine:
                 if not result["checksum_match"]:
                     result["status"] = VALIDATION_FAIL
 
-        logger.info(
-            "Validation %s for %s: source=%d target=%d",
-            result["status"],
-            table_name,
-            source_rows,
-            target_rows,
-        )
         return result
 
     @classmethod

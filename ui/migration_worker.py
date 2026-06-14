@@ -17,14 +17,13 @@ class MigrationWorker(QThread):
     progress_updated = pyqtSignal(dict)
     migration_finished = pyqtSignal(dict)
     migration_error = pyqtSignal(str)
-    log_message = pyqtSignal(str)
 
     def __init__(
         self,
         source_engine: Engine,
         target_engine: Engine,
         tables: List[str],
-        batch_size: int = 5000,
+        batch_size: int = 50000,
         skip_existing: bool = True,
         validate: bool = True,
         parent=None,
@@ -49,17 +48,14 @@ class MigrationWorker(QThread):
     def pause(self) -> None:
         if self._context:
             self._context.pause()
-            self.log_message.emit("Migration paused")
 
     def resume(self) -> None:
         if self._context:
             self._context.resume()
-            self.log_message.emit("Migration resumed")
 
     def stop(self) -> None:
         if self._context:
             self._context.stop()
-            self.log_message.emit("Migration stop requested")
 
     def run(self) -> None:
         try:
@@ -82,7 +78,6 @@ class MigrationWorker(QThread):
                 progress_callback=self._on_progress,
             )
 
-            self.log_message.emit(f"Job started: {job['job_id']}")
             result = engine.run_full_migration(
                 tables=self.tables,
                 migrate_schema=True,

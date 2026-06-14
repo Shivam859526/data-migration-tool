@@ -6,10 +6,6 @@ from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional
 
-from utils.logger import Logger
-
-logger = Logger.get_logger("transform")
-
 TransformHook = Callable[[str, Any], Any]
 
 

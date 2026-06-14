@@ -2,11 +2,11 @@
 
 import time
 from typing import Any, Dict, Optional
+from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
-from urllib.parse import quote_plus
 
 from config.constants import (
     CONNECTION_MAX_OVERFLOW,
@@ -14,9 +14,6 @@ from config.constants import (
     CONNECTION_RETRY_ATTEMPTS,
     CONNECTION_RETRY_DELAY,
 )
-from utils.logger import Logger
-
-logger = Logger.get_logger("connection")
 
 
 class ConnectionManager:
@@ -38,7 +35,6 @@ class ConnectionManager:
             pool_recycle=3600,
         )
         cls._engines[key] = engine
-        logger.info("Engine created for %s", key)
         return engine
 
     @staticmethod
@@ -57,11 +53,11 @@ class ConnectionManager:
         """Build a MySQL engine from a config dict."""
         password = quote_plus(config["password"])
         url = (
-        f"mysql+pymysql://"
-        f"{config['username']}:{password}@"
-        f"{config['host']}:{config['port']}/{config['database']}"
-        f"?charset=utf8mb4"
-    )
+            f"mysql+pymysql://"
+            f"{config['username']}:{password}@"
+            f"{config['host']}:{config['port']}/{config['database']}"
+            f"?charset=utf8mb4"
+        )
         key = f"mysql:{config['host']}:{config['port']}:{config['database']}"
         return ConnectionManager._build_engine(url, key)
 
@@ -79,20 +75,12 @@ class ConnectionManager:
             try:
                 with engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
-                logger.info("Connection test succeeded on attempt %d", attempt)
                 return True
             except SQLAlchemyError as exc:
                 last_error = exc
-                logger.warning(
-                    "Connection test failed (attempt %d/%d): %s",
-                    attempt,
-                    retries,
-                    exc,
-                )
                 if attempt < retries:
                     time.sleep(delay)
 
-        logger.error("Connection test failed after %d attempts: %s", retries, last_error)
         return False
 
     @classmethod
@@ -102,7 +90,6 @@ class ConnectionManager:
         keys_to_remove = [k for k, v in cls._engines.items() if v is engine]
         for key in keys_to_remove:
             del cls._engines[key]
-        logger.info("Engine disposed")
 
     @classmethod
     def close_all(cls) -> None:
@@ -110,4 +97,3 @@ class ConnectionManager:
         for engine in list(cls._engines.values()):
             engine.dispose()
         cls._engines.clear()
-        logger.info("All engines disposed")

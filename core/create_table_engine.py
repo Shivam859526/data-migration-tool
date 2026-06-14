@@ -7,9 +7,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from mappings.datatype_mapping import DataTypeMapping
-from utils.logger import Logger
-
-logger = Logger.get_logger("schema")
 
 
 class CreateTableEngine:
@@ -189,16 +186,13 @@ class CreateTableEngine:
         """Execute CREATE TABLE SQL. Returns True if created, False if skipped."""
         table_name = sql.split("CREATE TABLE")[1].strip().split("(")[0].strip().strip("`")
         if skip_existing and cls.table_exists(engine, table_name):
-            logger.info("Table %s already exists — skipping", table_name)
             return False
 
         try:
             with engine.begin() as conn:
                 conn.execute(text(sql))
-            logger.info("Created table %s", table_name)
             return True
-        except SQLAlchemyError as exc:
-            logger.error("Failed to create table %s: %s", table_name, exc)
+        except SQLAlchemyError:
             raise
 
     @classmethod
@@ -212,17 +206,10 @@ class CreateTableEngine:
             try:
                 with engine.begin() as conn:
                     conn.execute(text(fk_sql))
-                logger.info("Applied FK on %s", metadata["table_name"])
             except SQLAlchemyError as exc:
                 err = str(exc).lower()
                 if "duplicate" in err or "already exists" in err:
-                    logger.warning(
-                        "FK already exists on %s — skipping", metadata["table_name"]
-                    )
                     continue
-                logger.error(
-                    "Failed to apply FK on %s: %s", metadata["table_name"], exc
-                )
                 raise
 
     @classmethod
@@ -244,8 +231,8 @@ class CreateTableEngine:
                 try:
                     with engine.begin() as conn:
                         conn.execute(text(index_sql))
-                except SQLAlchemyError as exc:
-                    logger.warning("Index creation skipped: %s", exc)
+                except SQLAlchemyError:
+                    pass
 
             if not defer_foreign_keys:
                 cls.apply_foreign_keys(engine, metadata)
